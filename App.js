@@ -1,68 +1,38 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import { Video } from 'expo-av';
+import * as React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { FontAwesome } from '@expo/vector-icons';
+import HomeScreen from './screens/homescreen';
+import LocalScreen from './screens/localscreen';
 
-export default function App() {
-  const videoRef = useRef(null);
-  const [status, setStatus] = useState({});
+const Tab = createBottomTabNavigator();
 
-  const videoUri = 'http://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4';
-
-  const playVideo = async () => {
-    if (videoRef.current) {
-      await videoRef.current.playAsync();
-    }
-  };
-
-  const pauseVideo = async () => {
-    if (videoRef.current) {
-      await videoRef.current.pauseAsync();
-    }
-  };
-
+function App() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Expo AV Video Example</Text>
-      <Video
-        ref={videoRef}
-        style={styles.video}
-        source={{ uri: videoUri }}
-        useNativeControls // Enables native playback controls (play, pause, etc.)
-        resizeMode="contain" // Adjust this based on your video's aspect ratio
-        onPlaybackStatusUpdate={(newStatus) => setStatus(() => newStatus)}
-      />
-      <View style={styles.buttonContainer}>
-        <Button title="Play" onPress={playVideo} />
-        <Button title="Pause" onPress={pauseVideo} />
-      </View>
-      <Text style={styles.status}>
-        Status: {status.isPlaying ? 'Playing' : 'Paused'}
-      </Text>
-    </View>
+    <NavigationContainer>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
+
+            if (route.name === 'Home') {
+              iconName = focused ? 'home' : 'home';
+            } else if (route.name === 'Local') {
+              iconName = focused ? 'location-arrow' : 'location-arrow';
+            }
+
+            return <FontAwesome name={iconName} size={size} color={color} />;
+          },
+          tabBarActiveTintColor: 'blue', // Set the active tab color
+          tabBarInactiveTintColor: 'gray', // Set the inactive tab color
+          tabBarStyle: { display: 'flex' }, // Set your tab bar style here
+        })}
+      >
+        <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'My Home' }} />
+        <Tab.Screen name="Local" component={LocalScreen} options={{ title: 'Local Files' }} />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  video: {
-    width: 300,
-    height: 200,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20,
-  },
-  status: {
-    marginTop: 10,
-  },
-});
+export default App;

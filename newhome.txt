@@ -1,0 +1,78 @@
+import React, { useRef, useState } from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
+import { Video } from 'expo-av';
+import * as ScreenOrientation from 'expo-screen-orientation';
+//https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8
+//http://vjs.zencdn.net/v/oceans.mp4
+//https://livesim.dashif.org/livesim/chunkdur_1/ato_7/testpic4_8s/Manifest.mpd
+
+
+function HomeScreen() {
+  const videoRef = useRef(null);
+  const [status, setStatus] = useState({});
+
+  const videoUri = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
+
+  const playVideo = async () => {
+    if (videoRef.current) {
+      await videoRef.current.playAsync();
+    }
+  };
+
+  const pauseVideo = async () => {
+    if (videoRef.current) {
+      await videoRef.current.pauseAsync();
+    }
+  };
+
+  return (
+
+    <View style={styles.container}>
+      <Text style={styles.header}>Expo AV Video Example</Text>
+      <Video
+        ref={videoRef}
+        style={styles.video}
+        source={{ uri: videoUri }}
+        useNativeControls // Enables native playback controls (play, pause, etc.)
+        resizeMode="contain" // Adjust this based on your video's aspect ratio
+        onPlaybackStatusUpdate={(newStatus) => setStatus(() => newStatus)}
+      />
+      <View style={styles.buttonContainer}>
+        <Button title="Play" onPress={playVideo} />
+        <Button title="Pause" onPress={pauseVideo} />
+      </View>
+      <Text style={styles.status}>
+        Status: {status.isPlaying ? 'Playing' : 'Paused'}
+      </Text>
+    </View>
+
+  );
+}
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  video: {
+    width: 300,
+    height: 200,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 20,
+  },
+  status: {
+    marginTop: 10,
+  },
+});
+
+export default HomeScreen;

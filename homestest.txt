@@ -1,0 +1,145 @@
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import { Video } from 'expo-av';
+import ModalDropdown from 'react-native-modal-dropdown';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import * as ScreenOrientation from 'expo-screen-orientation';
+
+function HomeScreen() {
+  const videoRef = useRef(null);
+  const [status, setStatus] = useState({});
+  const [selectedRate, setSelectedRate] = useState(1.0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
+
+  const videoUri = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
+
+  useEffect(() => {
+    const updateOrientation = async () => {
+      const orientation = await ScreenOrientation.getOrientationAsync();
+      setIsLandscape(orientation === 3 || orientation === 4); // Landscape modes
+    };
+
+    updateOrientation();
+
+    const subscription = ScreenOrientation.addOrientationChangeListener(({ orientationInfo }) => {
+      setIsLandscape(orientationInfo.orientation === 3 || orientationInfo.orientation === 4);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const togglePlayPause = async () => {
+    if (videoRef.current) {
+      if (status.isPlaying) {
+        await videoRef.current.pauseAsync();
+      } else {
+        await videoRef.current.playAsync();
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.setIsMutedAsync(!isMuted);
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const rateOptions = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+
+  const changeRate = (rate) => {
+    setSelectedRate(rate);
+    if (videoRef.current) {
+      videoRef.current.setRateAsync(rate);
+    }
+  };
+
+  const toggleOrientation = () => {
+    if (isLandscape) {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
+    } else {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Video
+        ref={videoRef}
+        style={[
+          styles.video,
+          isLandscape ? styles.videoLandscape : styles.videoPortrait
+        ]}
+        source={{ uri: videoUri }}
+        useNativeControls={false}
+        resizeMode="contain"
+        onPlaybackStatusUpdate={(newStatus) => setStatus(newStatus)}
+      />
+      <View style={styles.customControls}>
+        <TouchableOpacity onPress={togglePlayPause} style={styles.controlButton}>
+          <Icon name={status.isPlaying ? 'pause' : 'play'} size={24} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={toggleMute} style={styles.controlButton}>
+          <Icon name={isMuted ? 'volume-off' : 'volume-up'} size={24} color="white" />
+        </TouchableOpacity>
+        <View style={styles.rateDropdownContainer}>
+          <Icon name="retweet" size={24} color="white" style={{ marginRight: 5 }} />
+          <Text style={styles.rateDropdownLabel}>Rate:</Text>
+          <ModalDropdown
+            options={rateOptions.map(rate => rate.toString())}
+            defaultValue={selectedRate.toString()}
+            onSelect={(index, value) => changeRate(parseFloat(value))}
+          />
+        </View>
+        <Button
+          title={isLandscape ? 'Switch to Portrait' : 'Switch to Landscape'}
+          onPress={toggleOrientation}
+        />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+    alignItems: 'center',
+  },
+  video: {
+    width: '100%',
+  },
+  videoPortrait: {
+    height: '50%',
+  },
+  videoLandscape: {
+    height: '100%',
+  },
+  customControls: {
+    position: 'absolute',
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: '100%',
+    padding: 10,
+  },
+  controlButton: {
+    padding: 10,
+  },
+  rateDropdownContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rateDropdownLabel: {
+    fontSize: 16,
+    marginRight: 10,
+    color: 'white',
+  },
+});
+
+export default HomeScreen;
